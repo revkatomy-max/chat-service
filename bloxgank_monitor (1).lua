@@ -12,6 +12,7 @@ local TweenService = game:GetService("TweenService")
 local WEBHOOK_URL = ""
 local WEBHOOK_STATS = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
 local WEBHOOK_FISH = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb"
+local WEBHOOK_CHAT = "https://discord.com/api/webhooks/1498573795118678176/oxD9a1iqw2Id7GPY5Qk077bhcN0awn_LWeblphJYUtu6UV7SeH1T_7zP_fhN3yjqCgh2"
 local DISCORD_ROLE_ID = "1489557585764810802"
 local WEBHOOK_AVATAR = ""
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
@@ -55,7 +56,7 @@ local ForgottenList = {
 
 -- // DATABASE MUTASI SPESIAL //
 local MutasiList = {
-    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Colorburn",
+    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Colorburn", "Radioactive",
 }
 
 -- // DATABASE CHANCE IKAN SECRET //
@@ -552,13 +553,54 @@ local function CheckCrystalSpawn(rawMsg)
     }, nil, nil, "")
 end
 
+-- // KIRIM LOG CHAT PEMAIN KE WEBHOOK //
+local function SendChatLog(senderName, message)
+    if not SCRIPT_ACTIVE then return end
+    if not message or message == "" then return end
+    local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+    if not requestFunc then return end
+    local url = (WEBHOOK_CHAT ~= "") and WEBHOOK_CHAT or (WEBHOOK_URL ~= "" and WEBHOOK_URL or "")
+    if url == "" then return end
+    local avatarUrl = nil
+    local player = FindPlayer(senderName)
+    if player then
+        avatarUrl = AvatarCache[player.UserId] or (PROXY .. "/avatar/" .. tostring(player.UserId) .. "?t=" .. tostring(os.time()))
+    end
+    local embed = {
+        ["title"] = "💬 CHAT LOG",
+        ["color"] = 5793266,
+        ["fields"] = {
+            {["name"] = "👤 Pemain", ["value"] = "**" .. senderName .. "**", ["inline"] = true},
+            {["name"] = "💬 Pesan",  ["value"] = message,                    ["inline"] = false},
+        },
+        ["footer"] = {["text"] = "BLOX Gank Chat Log | " .. os.date("%X")},
+        ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    }
+    if avatarUrl then embed["thumbnail"] = {["url"] = avatarUrl} end
+    task.spawn(function()
+        pcall(function()
+            requestFunc({
+                Url = url, Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({["username"] = "BLOX Gank", ["avatar_url"] = WEBHOOK_AVATAR, ["embeds"] = {embed}})
+            })
+        end)
+    end)
+end
+
 -- // HOOK CHAT SERVER //
 local function HookChat()
     if TextChatService then
         TextChatService.MessageReceived:Connect(function(msg)
+            local text = msg.Text or ""
             if msg.TextSource == nil then
-                CheckAndSend(msg.Text or "")
-                CheckCrystalSpawn(msg.Text or "")
+                -- Pesan dari system/server
+                CheckAndSend(text)
+                CheckCrystalSpawn(text)
+            else
+                -- Pesan dari pemain
+                local senderName = msg.TextSource and msg.TextSource.Name or "Unknown"
+                SendChatLog(senderName, text)
             end
         end)
     end
@@ -568,8 +610,18 @@ local function HookChat()
         if onMessage then
             onMessage.OnClientEvent:Connect(function(d)
                 if d and d.Message then
-                    CheckAndSend(d.Message)
-                    CheckCrystalSpawn(d.Message)
+                    -- Legacy chat: pesan server biasanya ada prefix [Server] atau "obtained"
+                    local lowerMsg = string.lower(d.Message)
+                    local isServerMsg = string.find(lowerMsg, "%[server%]")
+                        or string.find(lowerMsg, "obtained")
+                        or string.find(lowerMsg, "crystal")
+                    if isServerMsg then
+                        CheckAndSend(d.Message)
+                        CheckCrystalSpawn(d.Message)
+                    else
+                        local senderName = d.FromSpeaker or d.SpeakerName or "Unknown"
+                        SendChatLog(senderName, d.Message)
+                    end
                 end
             end)
         end
@@ -716,7 +768,7 @@ local function CreateUI()
 
     local frame = Instance.new("Frame")
     frame.Name = "Main"
-    frame.Size = UDim2.new(0, 300, 0, 320)
+    frame.Size = UDim2.new(0, 300, 0, 360)
     frame.Position = UDim2.new(0.5, -150, 0.5, -90)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     frame.BorderSizePixel = 0
@@ -772,7 +824,7 @@ local function CreateUI()
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 
     local isMinimized = false
-    local fullSize = UDim2.new(0, 300, 0, 320)
+    local fullSize = UDim2.new(0, 300, 0, 360)
     local miniSize = UDim2.new(0, 300, 0, 36)
     minBtn.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
@@ -871,13 +923,15 @@ local function CreateUI()
     local inputFish = makeInput("Paste webhook secret fish...", 124)
     makeLabel("📊 Webhook Stats", 162)
     local inputStats = makeInput("Paste webhook stats...", 176)
-    makeLabel("🔔 Discord Role ID (opsional)", 214)
-    local inputRole = makeInput("Masukkan Role ID...", 228)
+    makeLabel("💬 Webhook Chat Log", 214)
+    local inputChat = makeInput("Paste webhook chat log...", 228)
+    makeLabel("🔔 Discord Role ID (opsional)", 252)
+    local inputRole = makeInput("Masukkan Role ID...", 266)
 
     local startBtn = Instance.new("TextButton")
     startBtn.Text = "START MONITORING"
     startBtn.Size = UDim2.new(1, -24, 0, 34)
-    startBtn.Position = UDim2.new(0, 12, 0, 266)
+    startBtn.Position = UDim2.new(0, 12, 0, 304)
     startBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
     startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     startBtn.Font = Enum.Font.GothamBold
@@ -907,6 +961,8 @@ local function CreateUI()
         WEBHOOK_URL = joinText
         if fishText:find("discord.com/api/webhooks") then WEBHOOK_FISH = fishText end
         if statsText:find("discord.com/api/webhooks") then WEBHOOK_STATS = statsText end
+        local chatText = inputChat.Text
+        if chatText:find("discord.com/api/webhooks") then WEBHOOK_CHAT = chatText end
         local roleText = inputRole.Text:match("^%s*(.-)%s*$")
         if roleText ~= "" then DISCORD_ROLE_ID = roleText end
         SCRIPT_ACTIVE = true
@@ -918,6 +974,7 @@ local function CreateUI()
         inputJoin.TextEditable = false
         inputFish.TextEditable = false
         inputStats.TextEditable = false
+        inputChat.TextEditable = false
         inputRole.TextEditable = false
         StartMonitoring()
     end)
