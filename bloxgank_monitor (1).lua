@@ -15,7 +15,7 @@ local TweenService       = game:GetService("TweenService")
 
 local WEBHOOK_URL       = ""
 local WEBHOOK_STATS     = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
-local WEBHOOK_FISH      = "https://discord.com/api/webhooks/1491726016291405884/HIyVphEsp02A-h_Ry1M2YhivK51YZPngEkb2oOgdXZVD-hcArpBjh19yG7HiHmIz7f2a"
+local WEBHOOK_FISH      = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb"
 local WEBHOOK_CHAT      = "https://discord.com/api/webhooks/1498573795118678176/oxD9a1iqw2Id7GPY5Qk077bhcN0awn_LWeblphJYUtu6UV7SeH1T_7zP_fhN3yjqCgh2"
 local WEBHOOK_GALATAMA  = "https://discord.com/api/webhooks/1487995039912038481/BqBd5GD0D6lLvE6y5rlGblGNXMl3ScQ8C40fCVXYiTy8YmbVYbbsi8yQOjvuIUNgtz2q"
 local DISCORD_ROLE_ID   = "1489557585764810802"
@@ -36,6 +36,26 @@ local LEADERBOARD_GALATAMA_INTERVAL = 1800  -- 30 menit (bisa dibedakan)
 -- ============================================================
 
 local MemberList = {
+    { username = "zupzupzuppasup",   display = "RISKAMAUFORGOTTEN", id = "766292778501275678" },
+    { username = "natadecxco",       display = "nata",              id = "638355599574171668" },
+    { username = "NNOON412",         display = "412",               id = "1125668364489080933" },
+    { username = "kdryvka",          display = "YIYA",              id = "1312729486067761162" },
+    { username = "Deff69699",        display = "DEF",               id = "1407731878756221040" },
+    { username = "fzallzall",        display = "Ziell",             id = "462346945441038337" },
+    { username = "x_ibo21",          display = "wowo",              id = "954296542406246400" },
+    { username = "evosudin",         display = "Bluuism",           id = "875656564931956766" },
+    { username = "minxing_kim",      display = "minxing",           id = "484295718765461515" },
+    { username = "w4terhyacinth",    display = "ReVWater",          id = "1309945598409048076" },
+    { username = "sedotanpink",      display = "sedotanpink",       id = "1406804062825091274" },
+    { username = "dekadekadekk",     display = "dekadee",           id = "692735562817470494" },
+    { username = "ceriseciscake",    display = "ciscake",           id = "786950836034994216" },
+    { username = "cobadulumogaseru", display = "lah",               id = "1451975194397638676" },
+    { username = "BEJOD06",          display = "masw",              id = "1222390041951600640" },
+    { username = "flucidious",       display = "fluc",              id = "279691238494699530" },
+    { username = "hawaish01",        display = "ilywaa",            id = "1392909983678595244" },
+    { username = "ocheanyx",         display = "Michiko",           id = "1299617626309263381" },
+    { username = "Reverned99",       display = "Reverned99",        id = "870201488218157107" },
+    { username = "Leale716",         display = "leaa",              id = "1408658812424028182" },
 }
 
 -- ============================================================
@@ -46,7 +66,7 @@ local SecretFishList = {
     "Crystal Crab", "Orca", "Zombie Shark", "Zombie Megalodon", "Dead Zombie Shark",
     "Blob Shark", "Ghost Shark", "Skeleton Narwhal", "Ghost Worm Fish", "Worm Fish",
     "Megalodon", "1x1x1x1 Comet Shark", "Bloodmoon Whale", "Lochness Monster",
-    "Monster Shark", "Eerie Shark", "Great Whale", "Frostborn Shark", "Thin Armor Shark",
+    "Monster Shark", "Eerie Shark", "Great Whale", "Frostborn Shark", "Thin Armored Shark",
     "Scare", "Queen Crab", "King Crab", "Cryoshade Glider", "Panther Eel",
     "Giant Squid", "Depthseeker Ray", "Robot Kraken", "Mosasaur Shark", "King Jelly",
     "Bone Whale", "Elshark Gran Maja", "Elpirate Gran Maja", "Ancient Whale",
