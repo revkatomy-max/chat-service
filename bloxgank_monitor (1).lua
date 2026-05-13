@@ -15,7 +15,7 @@ local TweenService       = game:GetService("TweenService")
 
 local WEBHOOK_URL       = ""
 local WEBHOOK_STATS     = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
-local WEBHOOK_FISH      = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb"
+local WEBHOOK_FISH      = "https://discord.com/api/webhooks/1491726016291405884/HIyVphEsp02A-h_Ry1M2YhivK51YZPngEkb2oOgdXZVD-hcArpBjh19yG7HiHmIz7f2a"
 local WEBHOOK_CHAT      = "https://discord.com/api/webhooks/1498573795118678176/oxD9a1iqw2Id7GPY5Qk077bhcN0awn_LWeblphJYUtu6UV7SeH1T_7zP_fhN3yjqCgh2"
 local WEBHOOK_GALATAMA  = "https://discord.com/api/webhooks/1487995039912038481/BqBd5GD0D6lLvE6y5rlGblGNXMl3ScQ8C40fCVXYiTy8YmbVYbbsi8yQOjvuIUNgtz2q"
 local DISCORD_ROLE_ID   = "1489557585764810802"
@@ -29,7 +29,7 @@ local SAVE_CHANNEL_ID = ""  -- diisi lewat UI saat start
 local SAVE_STATE_TAG  = "GALATAMA_SAVESTATE_V1"
 
 local LEADERBOARD_INTERVAL          = 1800  -- 30 menit
-local LEADERBOARD_GALATAMA_INTERVAL = 1800  -- 30 menit (bisa dibedakan)
+local LEADERBOARD_GALATAMA_INTERVAL = 1200  -- 30 menit (bisa dibedakan)
 
 -- ============================================================
 --  MEMBER LIST
