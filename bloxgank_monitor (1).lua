@@ -66,7 +66,7 @@ local SecretFishList = {
     "Crystal Crab", "Orca", "Zombie Shark", "Zombie Megalodon", "Dead Zombie Shark",
     "Blob Shark", "Ghost Shark", "Skeleton Narwhal", "Ghost Worm Fish", "Worm Fish",
     "Megalodon", "1x1x1x1 Comet Shark", "Bloodmoon Whale", "Lochness Monster",
-    "Monster Shark", "Eerie Shark", "Great Whale", "Frostborn Shark", "Thin Armor Shark",
+    "Monster Shark", "Eerie Shark", "Great Whale", "Frostborn Shark", "Thin Armored Shark",
     "Scare", "Queen Crab", "King Crab", "Cryoshade Glider", "Panther Eel",
     "Giant Squid", "Depthseeker Ray", "Robot Kraken", "Mosasaur Shark", "King Jelly",
     "Bone Whale", "Elshark Gran Maja", "Elpirate Gran Maja", "Ancient Whale",
@@ -612,21 +612,40 @@ end
 -- ============================================================
 
 local function SendGalatamaLeaderboard(isFinal)
-    local leaderData = {}
+    -- Gabungkan GalatamaStats (uid-based) + NameStats (name-based fallback)
+    local merged = {}
     for uid, gs in pairs(GalatamaStats) do
         if gs.totalPoin > 0 then
-            local catchLines = {}
-            for fishName, count in pairs(gs.catches) do
-                local poinPerEkor = GalatamaPoin[fishName] or 0
-                local total       = poinPerEkor * count
-                table.insert(catchLines, fishName .. " x" .. count .. " (+" .. total .. "pts)")
+            local key = string.lower(gs.name or "unknown")
+            if not merged[key] or gs.totalPoin > merged[key].totalPoin then
+                merged[key] = { name = gs.name or "Unknown", totalPoin = gs.totalPoin, catches = gs.catches }
             end
-            table.insert(leaderData, {
-                name      = gs.name or "Unknown",
-                totalPoin = gs.totalPoin,
-                catchStr  = #catchLines > 0 and table.concat(catchLines, "\n") or "-",
-            })
         end
+    end
+    for lname, ns in pairs(NameStats) do
+        if (ns.totalPoin or 0) > 0 then
+            if not merged[lname] then
+                merged[lname] = { name = ns.name, totalPoin = ns.totalPoin or 0, catches = ns.catches }
+            elseif (ns.totalPoin or 0) > merged[lname].totalPoin then
+                merged[lname] = { name = ns.name, totalPoin = ns.totalPoin or 0, catches = ns.catches }
+            end
+        end
+    end
+
+    local leaderData = {}
+    for _, gs in pairs(merged) do
+        local catchLines = {}
+        for fishName, count in pairs(gs.catches) do
+            local poinPerEkor = GalatamaPoin[fishName] or 0
+            local total       = poinPerEkor * count
+            table.insert(catchLines, fishName .. " x" .. count .. " (+" .. total .. "pts)")
+        end
+        table.insert(leaderData, {
+            name      = gs.name,
+            totalPoin = gs.totalPoin,
+            catchStr  = #catchLines > 0 and table.concat(catchLines, "
+") or "-",
+        })
     end
 
     if #leaderData == 0 then return end
@@ -669,19 +688,46 @@ end
 --  LEADERBOARD SECRET (biasa)
 -- ============================================================
 
+-- NameStats: fallback storage ketika uid tidak ditemukan
+-- key = lowercase player name, value = { name, secretList, totalPoin, catches }
+local NameStats = {}
+
 local function BuildLeaderboardData()
-    local leaderData = {}
+    -- Gabungkan PlayerStats (uid-based) + NameStats (name-based fallback)
+    -- Pakai nama sebagai key deduplikasi
+    local merged = {}  -- lowercase name → { name, total, fishList }
+
     for uid, stats in pairs(PlayerStats) do
-        local total, fishList = 0, {}
+        local key = string.lower(stats.name or "unknown")
+        if not merged[key] then merged[key] = { name = stats.name or "Unknown", total = 0, fishList = {} } end
         for fishName, count in pairs(stats.secretList) do
-            total = total + count
-            table.insert(fishList, fishName .. " x" .. count)
+            merged[key].total = merged[key].total + count
+            table.insert(merged[key].fishList, fishName .. " x" .. count)
         end
-        if total > 0 then
+    end
+
+    for lname, ns in pairs(NameStats) do
+        if not merged[lname] then merged[lname] = { name = ns.name, total = 0, fishList = {} } end
+        for fishName, count in pairs(ns.secretList) do
+            -- hanya tambahkan jika belum ada di merged (hindari duplikat)
+            local exists = false
+            for _, entry in ipairs(merged[lname].fishList) do
+                if string.find(entry, fishName, 1, true) then exists = true; break end
+            end
+            if not exists then
+                merged[lname].total = merged[lname].total + count
+                table.insert(merged[lname].fishList, fishName .. " x" .. count)
+            end
+        end
+    end
+
+    local leaderData = {}
+    for _, entry in pairs(merged) do
+        if entry.total > 0 then
             table.insert(leaderData, {
-                name    = stats.name or "Unknown",
-                total   = total,
-                fishStr = #fishList > 0 and table.concat(fishList, ", ") or "-",
+                name    = entry.name,
+                total   = entry.total,
+                fishStr = #entry.fishList > 0 and table.concat(entry.fishList, ", ") or "-",
             })
         end
     end
@@ -787,18 +833,22 @@ local function CheckAndSend(rawMsg)
         if candidate then uid = candidate end
     end
 
-    -- Update player stats
+    -- Update PlayerStats (uid-based, primary)
     if uid then
         if not PlayerStats[uid] then
             PlayerStats[uid] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = data.player }
         end
         PlayerStats[uid].catchCount   = PlayerStats[uid].catchCount + 1
         PlayerStats[uid].lastFishTime = os.time()
-
-        -- Init GalatamaStats jika belum ada
         if not GalatamaStats[uid] then
             GalatamaStats[uid] = { name = data.player, totalPoin = 0, catches = {} }
         end
+    end
+
+    -- Update NameStats (name-based fallback, selalu diupdate sebagai safety net)
+    local lname = string.lower(data.player)
+    if not NameStats[lname] then
+        NameStats[lname] = { name = data.player, secretList = {}, totalPoin = 0, catches = {} }
     end
 
     -- 1. Crystalized Legendary
@@ -842,16 +892,27 @@ local function CheckAndSend(rawMsg)
         if uid and PlayerStats[uid] then
             PlayerStats[uid].secretList[baseName] = (PlayerStats[uid].secretList[baseName] or 0) + 1
         end
+        -- Fallback: selalu update NameStats juga
+        local lname2 = string.lower(data.player)
+        if NameStats[lname2] then
+            NameStats[lname2].secretList[baseName] = (NameStats[lname2].secretList[baseName] or 0) + 1
+        end
 
         -- Cek apakah ikan ini masuk Galatama & tambah point
         local galatamaBase = FindGalatamaFish(data.fish)
         local galaPoint    = galatamaBase and GalatamaPoin[galatamaBase] or 0
-        if galatamaBase and galaPoint > 0 and uid and GalatamaStats[uid] then
-            GalatamaStats[uid].catches[galatamaBase] = (GalatamaStats[uid].catches[galatamaBase] or 0) + 1
-            GalatamaStats[uid].totalPoin             = GalatamaStats[uid].totalPoin + galaPoint
-            -- Simpan username asli dari object player, bukan dari chat (yang bisa display name)
-            if targetPlayer then
-                GalatamaStats[uid].name = targetPlayer.Name
+        if galatamaBase and galaPoint > 0 then
+            -- Primary: uid-based
+            if uid and GalatamaStats[uid] then
+                GalatamaStats[uid].catches[galatamaBase] = (GalatamaStats[uid].catches[galatamaBase] or 0) + 1
+                GalatamaStats[uid].totalPoin             = GalatamaStats[uid].totalPoin + galaPoint
+                if targetPlayer then GalatamaStats[uid].name = targetPlayer.Name end
+            end
+            -- Fallback: name-based
+            local lnameG = string.lower(data.player)
+            if NameStats[lnameG] then
+                NameStats[lnameG].catches[galatamaBase] = (NameStats[lnameG].catches[galatamaBase] or 0) + 1
+                NameStats[lnameG].totalPoin             = (NameStats[lnameG].totalPoin or 0) + galaPoint
             end
         end
 
