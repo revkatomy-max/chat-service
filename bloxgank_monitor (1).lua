@@ -1073,8 +1073,7 @@ local function StartMonitoring()
 
     HookChat()
 
-    -- Kirim kedua leaderboard saat disconnect
-    -- BindToClose adalah cara paling reliable — dipanggil Roblox tepat sebelum game close/kick
+    -- Kirim leaderboard saat disconnect
     local finalSent = false
     local function TrySendFinal()
         if finalSent or not SCRIPT_ACTIVE then return end
@@ -1082,18 +1081,12 @@ local function StartMonitoring()
         SendFinalLeaderboard()
     end
 
-    -- 1. BindToClose: dipanggil saat game akan ditutup (paling cepat & reliable)
-    game:BindToClose(function()
-        TrySendFinal()
-        task.wait(3)  -- beri waktu webhook terkirim sebelum game benar-benar close
-    end)
-
-    -- 2. AncestryChanged: backup kalau player di-kick
+    -- 1. AncestryChanged: dipanggil saat player di-kick atau leave
     game:GetService("Players").LocalPlayer.AncestryChanged:Connect(function(_, parent)
         if parent == nil then TrySendFinal() end
     end)
 
-    -- 3. CharacterRemoving + delay: backup terakhir
+    -- 2. CharacterRemoving + delay: backup kalau respawn vs leave
     local localPlayer = Players.LocalPlayer
     localPlayer.CharacterRemoving:Connect(function()
         task.delay(2, function()
